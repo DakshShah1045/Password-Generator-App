@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Generator App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        .hidden {
+            display: none;
+        }
+        input, button {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .terms {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .terms input {
+            width: auto;
+            margin-right: 10px;
+        }
+        li {
+            margin-top: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="login-form">
+            <h2>Login</h2>
+            <input type="password" id="login-password" placeholder="Enter Password">
+            <button id="login-button">Login</button>
+            <button id="create-account-button">Create Account</button>
+        </div>
+
+        <div id="create-account-form" class="hidden">
+            <h2>Create Account</h2>
+            <input type="email" id="email" placeholder="Enter Email">
+            <input type="text" id="phone" placeholder="Enter Phone Number">
+            <input type="password" id="new-password" placeholder="Create Password">
+            <div class="terms">
+                <input type="checkbox" id="accept-terms">
+                <label for="accept-terms">I accept the <a href="terms.html">terms and conditions</a></label>
+            </div>
+            <button id="register-button">Register</button>
+        </div>
+
+        <div id="main-page" class="hidden">
+            <h2>Password Generator</h2>
+            <input type="text" id="password-for" placeholder="Password for?">
+            <button id="generate-button">Generate Password</button>
+            <input type="text" id="generated-password" readonly>
+            <button id="save-button">Save Password</button>
+            <button id="view-passwords-button">View Passwords</button>
+
+            <div id="view-passwords-modal" class="hidden">
+                <h3>Enter Password to View Saved Passwords</h3>
+                <input type="password" id="view-password-auth" placeholder="Enter Password">
+                <button id="view-passwords-auth-button">View Passwords</button>
+                <div id="saved-passwords-list" class="hidden">
+                    <h4>Saved Passwords</h4>
+                    <ul id="passwords-list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('login-form');
+        const createAccountForm = document.getElementById('create-account-form');
+        const mainPage = document.getElementById('main-page');
+        const loginButton = document.getElementById('login-button');
+        const createAccountButton = document.getElementById('create-account-button');
+        const registerButton = document.getElementById('register-button');
+        const generateButton = document.getElementById('generate-button');
+        const saveButton = document.getElementById('save-button');
+        const viewPasswordsButton = document.getElementById('view-passwords-button');
+        const viewPasswordsModal = document.getElementById('view-passwords-modal');
+        const viewPasswordsAuthButton = document.getElementById('view-passwords-auth-button');
+        const savedPasswordsList = document.getElementById('saved-passwords-list');
+        const passwordsList = document.getElementById('passwords-list');
+
+        let savedAccounts = JSON.parse(localStorage.getItem('accounts')) || [];
+        let savedPasswords = JSON.parse(localStorage.getItem('passwords')) || [];
+
+        createAccountButton.addEventListener('click', () => {
+            loginForm.classList.add('hidden');
+            createAccountForm.classList.remove('hidden');
+        });
+
+        registerButton.addEventListener('click', () => {
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const password = document.getElementById('new-password').value;
+            const acceptTerms = document.getElementById('accept-terms').checked;
+
+            if (!acceptTerms) {
+                alert('You must accept the terms and conditions to create an account.');
+                return;
+            }
+
+            if (email && phone && password) {
+                savedAccounts.push({ email, phone, password });
+                localStorage.setItem('accounts', JSON.stringify(savedAccounts));
+                alert('Account created successfully!');
+                createAccountForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+            } else {
+                alert('Please fill all fields');
+            }
+        });
+
+        loginButton.addEventListener('click', () => {
+            const loginPassword = document.getElementById('login-password').value;
+            const account = savedAccounts.find(acc => acc.password === loginPassword);
+
+            if (account) {
+                alert('Login successful!');
+                loginForm.classList.add('hidden');
+                mainPage.classList.remove('hidden');
+            } else {
+                alert('Invalid password');
+            }
+        });
+
+        generateButton.addEventListener('click', () => {
+            const password = Array(16).fill(null).map(() => {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+                return chars[Math.floor(Math.random() * chars.length)];
+            }).join('');
+            document.getElementById('generated-password').value = password;
+        });
+
+        saveButton.addEventListener('click', () => {
+            const passwordFor = document.getElementById('password-for').value;
+            const generatedPassword = document.getElementById('generated-password').value;
+
+            if (passwordFor && generatedPassword) {
+                savedPasswords.push({ passwordFor, generatedPassword });
+                localStorage.setItem('passwords', JSON.stringify(savedPasswords));
+                alert('Password saved successfully!');
+            } else {
+                alert('Please fill in all fields');
+            }
+        });
+
+        viewPasswordsButton.addEventListener('click', () => {
+            viewPasswordsModal.classList.remove('hidden');
+        });
+
+        viewPasswordsAuthButton.addEventListener('click', () => {
+            const authPassword = document.getElementById('view-password-auth').value;
+            const account = savedAccounts.find(acc => acc.password === authPassword);
+
+            if (account) {
+                savedPasswordsList.classList.remove('hidden');
+                passwordsList.innerHTML = '';
+                savedPasswords.forEach(({ passwordFor, generatedPassword }) => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${passwordFor}: ${generatedPassword}`;
+                    passwordsList.appendChild(listItem);
+                });
+            } else {
+                alert('Invalid password');
+            }
+        });
+    </script>
+</body>
+</html>
